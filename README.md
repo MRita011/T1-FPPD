@@ -60,8 +60,8 @@ O arquivo `mapa.txt` contém cenários com os elementos para testes. O NPC e os 
 
 ## 🧑‍💻 Equipe
 
-- Amanda Wilmsen: email 
-- Luís Trein: email   
+- Amanda Wilmsen: amandac.wilmsen@gmail.com 
+- Luís Trein: 21luiseduardo2005@gmail.com  
 - Maria Rita: m.ritarodrigues09@gmail.com  
 
 ## 📁 Estrutura do Projeto
