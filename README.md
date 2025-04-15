@@ -60,8 +60,9 @@ O arquivo `mapa.txt` contém cenários com os elementos para testes. O NPC e os 
 
 ## 🧑‍💻 Equipe
 
-- Amanda Wilmsen: amandac.wilmsen@gmail.com 
-- Luís Trein: 21luiseduardo2005@gmail.com  
+- Amanda Wilmsen: email
+- Killian D.B: killian.d@edu.pucrs.br
+- Luís Trein: email   
 - Maria Rita: m.ritarodrigues09@gmail.com  
 
 ## 📁 Estrutura do Projeto
@@ -84,4 +85,4 @@ O relatório anexo descreve:
 - Como interagem com o jogador
 - Comportamentos esperados
 - Abordagem de implementação usando goroutines e canais
--
+  https://docs.google.com/document/d/1BOLIXdguUHU_Q2kOid4UDEJaYej-GEtfyy_RirfOZLo/edit?usp=drivesdk
