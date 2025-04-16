@@ -13,9 +13,29 @@ type NPCGuian struct {
 	mu         sync.Mutex // Mutex para sincronização de acesso ao NPC
 }
 
+func (npc *NPCGuian) IniciarSeguidor(jogo *Jogo, parar <-chan struct{}) {
+	ticker := time.NewTicker(10 * time.Millisecond) // move a cada 500ms
+
+	go func() {
+		for {
+			select {
+			case <-ticker.C:
+				npc.seguirPersonagem(jogo)
+			case <-parar:
+				ticker.Stop()
+				return
+			}
+		}
+	}()
+}
+
+func (npc *NPCGuian) seguirPersonagem(jogo *Jogo) {
+	panic("unimplemented")
+}
+
 // Elemento visual do NPC Guian
 var (
-	NPC = Elemento{'🧙', CorVerde, CorPadrao, false} // Símbolo ♦ com cor verde
+	NPC = Elemento{'🧙', CorVerde, CorPadrao, true}
 )
 
 // Inicia o NPC em uma posição válida próxima ao jogador
@@ -58,7 +78,7 @@ func encontrarPosicaoInicial(jogo *Jogo, npc *NPCGuian) {
 		for x := -r; x <= r; x++ {
 			for y := -r; y <= r; y++ {
 				if x == 0 && y == 0 {
-					continue // Pula a posição do jogador
+					//continue // Pula a posição do jogador
 				}
 
 				nx, ny := jogo.PosX+x, jogo.PosY+y
