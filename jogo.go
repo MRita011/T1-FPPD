@@ -2,6 +2,8 @@
 package main
 
 import (
+	"math/rand"
+	"time"
 	"bufio"
 	"os"
 )
@@ -25,10 +27,10 @@ type Jogo struct {
 // Elementos visuais do jogo
 var (
 	Personagem = Elemento{'☺', CorCinzaEscuro, CorPadrao, true}
-	Inimigo    = Elemento{'☠', CorVermelho, CorPadrao, true}
 	Parede     = Elemento{'▤', CorParede, CorFundoParede, true}
 	Vegetacao  = Elemento{'♣', CorVerde, CorPadrao, false}
 	Vazio      = Elemento{' ', CorPadrao, CorPadrao, false}
+	Caixa      = Elemento{'■', CorAmarela, CorPadrao, true} // novo: caixa misteriosa
 )
 
 // Cria e retorna uma nova instância do jogo
@@ -56,12 +58,12 @@ func jogoCarregarMapa(nome string, jogo *Jogo) error {
 			switch ch {
 			case Parede.simbolo:
 				e = Parede
-			case Inimigo.simbolo:
-				e = Inimigo
 			case Vegetacao.simbolo:
 				e = Vegetacao
 			case Personagem.simbolo:
 				jogo.PosX, jogo.PosY = x, y // registra a posição inicial do personagem
+			case Caixa.simbolo:
+				e = Caixa
 			}
 			linhaElems = append(linhaElems, e)
 		}
@@ -70,6 +72,22 @@ func jogoCarregarMapa(nome string, jogo *Jogo) error {
 	}
 	if err := scanner.Err(); err != nil {
 		return err
+	}
+
+	// utilizando o seed para gerar números aleatórios
+	rand.Seed(time.Now().UnixNano())
+
+	numCaixas := 10 // quantidade de caixas que vamos gerar
+
+	// agora, vamos colocar as caixas em posições vazias aleatórias
+	for colocadas := 0; colocadas < numCaixas; {
+		x := rand.Intn(len(jogo.Mapa[0]))     // escolhe uma coluna aleatória
+		y := rand.Intn(len(jogo.Mapa))        //     "    "  linha aleatória
+
+		if jogo.Mapa[y][x] == Vazio {
+			jogo.Mapa[y][x] = Caixa           // coloca uma caixa na posição vazia
+			colocadas++                        // atualiza nosso contador de caixas colocadas
+		}
 	}
 	return nil
 }
