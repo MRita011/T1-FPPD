@@ -20,6 +20,9 @@ func main() {
 		panic(err)
 	}
 
+	// Inicializa o NPC após carregar o mapa
+	jogo.Guian = npcIniciar(&jogo)
+
 	// Desenha o estado inicial do jogo
 	interfaceDesenharJogo(&jogo)
 
