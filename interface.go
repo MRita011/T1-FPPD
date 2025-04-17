@@ -7,6 +7,7 @@ package main
 
 import (
 	"github.com/nsf/termbox-go"
+	"fmt"
 )
 
 // Define um tipo Cor para encapsuladar as cores do termbox
@@ -14,14 +15,14 @@ type Cor = termbox.Attribute
 
 // Definições de cores utilizadas no jogo
 const (
-	CorPadrao     Cor = termbox.ColorDefault
-	CorCinzaEscuro    = termbox.ColorDarkGray
-	CorVermelho       = termbox.ColorRed
-	CorVerde          = termbox.ColorGreen
-	CorParede         = termbox.ColorBlack | termbox.AttrBold | termbox.AttrDim
-	CorFundoParede    = termbox.ColorDarkGray
-	CorTexto          = termbox.ColorDarkGray
-	CorAmarela 	      = termbox.ColorYellow
+	CorPadrao      Cor = termbox.ColorDefault
+	CorCinzaEscuro     = termbox.ColorDarkGray
+	CorVermelho        = termbox.ColorRed
+	CorVerde           = termbox.ColorGreen
+	CorParede          = termbox.ColorBlack | termbox.AttrBold | termbox.AttrDim
+	CorFundoParede     = termbox.ColorDarkGray
+	CorTexto           = termbox.ColorDarkGray
+	CorAmarela         = termbox.ColorYellow
 )
 
 // EventoTeclado representa uma ação detectada do teclado (como mover, sair ou interagir)
@@ -68,6 +69,10 @@ func interfaceDesenharJogo(jogo *Jogo) {
 		}
 	}
 
+	if jogo.Guian != nil {
+		npcDesenhar(jogo, jogo.Guian)
+	}
+
 	// Desenha o personagem sobre o mapa
 	interfaceDesenharElemento(jogo.PosX, jogo.PosY, Personagem)
 
@@ -105,5 +110,35 @@ func interfaceDesenharBarraDeStatus(jogo *Jogo) {
 	for i, c := range msg {
 		termbox.SetCell(i, len(jogo.Mapa)+3, c, CorTexto, CorPadrao)
 	}
+
+	// Exibe a mensagem de tesouros encontrados abaixo das instruções
+	exibirMensagemTesouros(jogo)
 }
 
+func exibirMensagemTesouros(jogo *Jogo) {
+	larguraTotal, alturaTotal := termbox.Size()
+
+	linhas := []string{
+		"****************************************",
+		"Encontre os 4 tesouros escondidos no mapa!",
+		fmt.Sprintf("TESOUROS ENCONTRADOS: %d/4", jogo.Tesouros),
+		"****************************************",
+	}
+
+	linhaInicial := len(jogo.Mapa) + 5
+
+	// Se não houver espaço suficiente, sobe a linhaInicial
+	if linhaInicial+len(linhas) > alturaTotal {
+		linhaInicial = alturaTotal - len(linhas)
+		if linhaInicial < 0 {
+			linhaInicial = 0
+		}
+	}
+
+	for dy, linha := range linhas {
+		colunaInicial := (larguraTotal - len(linha)) / 2
+		for dx, c := range linha {
+			termbox.SetCell(colunaInicial+dx, linhaInicial+dy, c, CorTexto, CorPadrao)
+		}
+	}
+}

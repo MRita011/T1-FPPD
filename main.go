@@ -1,7 +1,26 @@
-// main.go - Loop principal do jogo
 package main
 
-import "os"
+import (
+	"os"
+	"time"
+)
+
+// Função para iniciar a renderização periódica do jogo
+func iniciarRenderizador(jogo *Jogo, parar <-chan struct{}) {
+	go func() {
+		ticker := time.NewTicker(100 * time.Millisecond) // redesenha a cada 100ms
+		defer ticker.Stop()
+
+		for {
+			select {
+			case <-ticker.C:
+				interfaceDesenharJogo(jogo)
+			case <-parar:
+				return
+			}
+		}
+	}()
+}
 
 func main() {
 	// Inicializa a interface (termbox)
@@ -20,15 +39,29 @@ func main() {
 		panic(err)
 	}
 
-	// Desenha o estado inicial do jogo
-	interfaceDesenharJogo(&jogo)
+	// Cria canal para parar as goroutines (NPC e renderizador)
+	parar := make(chan struct{})
+
+	// Inicializa o NPC
+	jogo.Guian = npcIniciar(&jogo)
+
+	// Inicia a renderização contínua do jogo
+	iniciarRenderizador(&jogo, parar)
 
 	// Loop principal de entrada
 	for {
 		evento := interfaceLerEventoTeclado()
 		if continuar := personagemExecutarAcao(evento, &jogo); !continuar {
+			close(parar) // Fecha o canal para parar as goroutines quando o jogo terminar
 			break
 		}
-		interfaceDesenharJogo(&jogo)
+
+		// vendo se o jogador caiu em uma armadilja
+		if jogo.FimDeJogo {
+			interfaceDesenharJogo(&jogo) // redesenhando para mostrar a msg
+			time.Sleep(7 * time.Second) // espera 10 segundos
+			close(parar)
+			break
+		}
 	}
 }

@@ -2,42 +2,52 @@
 package main
 
 import (
-	"math/rand"
-	"time"
 	"bufio"
+	"math/rand"
+	"sync"
 	"os"
+	"time"
 )
 
 // Elemento representa qualquer objeto do mapa (parede, personagem, vegetação, etc)
 type Elemento struct {
-	simbolo   rune
-	cor       Cor
-	corFundo  Cor
-	tangivel  bool // Indica se o elemento bloqueia passagem
+	simbolo  rune
+	cor      Cor
+	corFundo Cor
+	tangivel bool // Indica se o elemento bloqueia passagem
+
 }
 
 // Jogo contém o estado atual do jogo
 type Jogo struct {
-	Mapa            [][]Elemento // grade 2D representando o mapa
-	PosX, PosY      int          // posição atual do personagem
-	UltimoVisitado  Elemento     // elemento que estava na posição do personagem antes de mover
-	StatusMsg       string       // mensagem para a barra de status
+	Mapa           [][]Elemento // grade 2D representando o mapa
+	PosX, PosY     int          // posição atual do personagem
+	UltimoVisitado Elemento     // elemento que estava na posição do personagem antes de mover
+	StatusMsg      string       // mensagem para a barra de status
+	Guian          *NPCGuian    // referência ao NPC guia
+	FimDeJogo      bool         // indica se o jogador perdeu o jogo
+	Tesouros       int
+	Caixas         []*Caixa     // lista de caixas no mapa
+	MutexMapa      *sync.Mutex // mutex para proteger o acesso ao mapa
 }
 
 // Elementos visuais do jogo
 var (
-	Personagem = Elemento{'☺', CorCinzaEscuro, CorPadrao, true}
-	Parede     = Elemento{'▤', CorParede, CorFundoParede, true}
-	Vegetacao  = Elemento{'♣', CorVerde, CorPadrao, false}
-	Vazio      = Elemento{' ', CorPadrao, CorPadrao, false}
-	Caixa      = Elemento{'■', CorAmarela, CorPadrao, true} // novo: caixa misteriosa
+	Personagem         = Elemento{'☺', CorCinzaEscuro, CorPadrao, true}
+	Parede             = Elemento{'▤', CorParede, CorFundoParede, true}
+	Vegetacao          = Elemento{'♣', CorVerde, CorPadrao, false}
+	Vazio              = Elemento{' ', CorPadrao, CorPadrao, false}
+	CaixaElemento      = Elemento{'■', CorAmarela, CorPadrao, false} // novo: caixa misteriosa
 )
 
 // Cria e retorna uma nova instância do jogo
 func jogoNovo() Jogo {
 	// O ultimo elemento visitado é inicializado como vazio
 	// pois o jogo começa com o personagem em uma posição vazia
-	return Jogo{UltimoVisitado: Vazio}
+	return Jogo {
+		UltimoVisitado: Vazio,
+		MutexMapa: &sync.Mutex{},
+	}
 }
 
 // Lê um arquivo texto linha por linha e constrói o mapa do jogo
@@ -62,8 +72,8 @@ func jogoCarregarMapa(nome string, jogo *Jogo) error {
 				e = Vegetacao
 			case Personagem.simbolo:
 				jogo.PosX, jogo.PosY = x, y // registra a posição inicial do personagem
-			case Caixa.simbolo:
-				e = Caixa
+			case CaixaElemento.simbolo:
+				e = CaixaElemento
 			}
 			linhaElems = append(linhaElems, e)
 		}
@@ -76,17 +86,29 @@ func jogoCarregarMapa(nome string, jogo *Jogo) error {
 
 	// utilizando o seed para gerar números aleatórios
 	rand.Seed(time.Now().UnixNano())
-
-	numCaixas := 10 // quantidade de caixas que vamos gerar
+	numCaixas := 10
+	tipos := []TipoCaixa{VAZIA, TESOURO, ARMADILHA}
 
 	// agora, vamos colocar as caixas em posições vazias aleatórias
 	for colocadas := 0; colocadas < numCaixas; {
-		x := rand.Intn(len(jogo.Mapa[0]))     // escolhe uma coluna aleatória
-		y := rand.Intn(len(jogo.Mapa))        //     "    "  linha aleatória
+		x := rand.Intn(len(jogo.Mapa[0])) // escolhe uma coluna aleatória
+		y := rand.Intn(len(jogo.Mapa))    //     "    "  linha aleatória
 
 		if jogo.Mapa[y][x] == Vazio {
-			jogo.Mapa[y][x] = Caixa           // coloca uma caixa na posição vazia
-			colocadas++                        // atualiza nosso contador de caixas colocadas
+			jogo.Mapa[y][x] = CaixaElemento
+			tipo := tipos[rand.Intn(len(tipos))] // escolhe um tipo aleatório
+			caixa := &Caixa {
+				X: x,
+				Y: y,
+				Tipo: tipo,
+				Mapa: &jogo.Mapa,
+				Mutex: jogo.MutexMapa,
+				Interacao: make(chan bool),
+			}
+			
+			caixa.Iniciar(jogo) // inicia a caixa
+			jogo.Caixas = append(jogo.Caixas, caixa) // adiciona a caixa à lista de caixas
+			colocadas++ // incrementa o contador de caixas colocadas
 		}
 	}
 	return nil
@@ -120,7 +142,19 @@ func jogoMoverElemento(jogo *Jogo, x, y, dx, dy int) {
 	// Obtem elemento atual na posição
 	elemento := jogo.Mapa[y][x] // guarda o conteúdo atual da posição
 
-	jogo.Mapa[y][x] = jogo.UltimoVisitado     // restaura o conteúdo anterior
-	jogo.UltimoVisitado = jogo.Mapa[ny][nx]   // guarda o conteúdo atual da nova posição
-	jogo.Mapa[ny][nx] = elemento              // move o elemento
+	jogo.Mapa[y][x] = jogo.UltimoVisitado   // restaura o conteúdo anterior
+	jogo.UltimoVisitado = jogo.Mapa[ny][nx] // guarda o conteúdo atual da nova posição
+	jogo.Mapa[ny][nx] = elemento            // move o elemento
+}
+
+func interagir(jogo *Jogo) {
+	jogo.MutexMapa.Lock()
+	defer jogo.MutexMapa.Unlock()
+
+	for _, caixa := range jogo.Caixas {
+		if caixa.X == jogo.PosX && caixa.Y == jogo.PosY && !caixa.Removida {
+			caixa.Interacao <- true
+			break
+		}
+	}
 }

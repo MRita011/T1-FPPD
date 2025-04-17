@@ -27,6 +27,8 @@ func personagemMover(tecla rune, jogo *Jogo) {
 func personagemInteragir(jogo *Jogo) {
 	// Atualmente apenas exibe uma mensagem de status
 	jogo.StatusMsg = fmt.Sprintf("Interagindo em (%d, %d)", jogo.PosX, jogo.PosY)
+
+	interagir(jogo) // logica para interagir com as caixas
 }
 
 // Processa o evento do teclado e executa a ação correspondente
