@@ -55,5 +55,13 @@ func main() {
 			close(parar) // Fecha o canal para parar as goroutines quando o jogo terminar
 			break
 		}
+
+		// vendo se o jogador caiu em uma armadilja
+		if jogo.FimDeJogo {
+			interfaceDesenharJogo(&jogo) // redesenhando para mostrar a msg
+			time.Sleep(7 * time.Second) // espera 10 segundos
+			close(parar)
+			break
+		}
 	}
 }

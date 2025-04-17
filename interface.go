@@ -7,6 +7,7 @@ package main
 
 import (
 	"github.com/nsf/termbox-go"
+	"fmt"
 )
 
 // Define um tipo Cor para encapsuladar as cores do termbox
@@ -108,5 +109,36 @@ func interfaceDesenharBarraDeStatus(jogo *Jogo) {
 	msg := "Use WASD para mover e E para interagir. ESC para sair."
 	for i, c := range msg {
 		termbox.SetCell(i, len(jogo.Mapa)+3, c, CorTexto, CorPadrao)
+	}
+
+	// Exibe a mensagem de tesouros encontrados abaixo das instruções
+	exibirMensagemTesouros(jogo)
+}
+
+func exibirMensagemTesouros(jogo *Jogo) {
+	larguraTotal, alturaTotal := termbox.Size()
+
+	linhas := []string{
+		"****************************************",
+		"Encontre os 4 tesouros escondidos no mapa!",
+		fmt.Sprintf("TESOUROS ENCONTRADOS: %d/4", jogo.Tesouros),
+		"****************************************",
+	}
+
+	linhaInicial := len(jogo.Mapa) + 5
+
+	// Se não houver espaço suficiente, sobe a linhaInicial
+	if linhaInicial+len(linhas) > alturaTotal {
+		linhaInicial = alturaTotal - len(linhas)
+		if linhaInicial < 0 {
+			linhaInicial = 0
+		}
+	}
+
+	for dy, linha := range linhas {
+		colunaInicial := (larguraTotal - len(linha)) / 2
+		for dx, c := range linha {
+			termbox.SetCell(colunaInicial+dx, linhaInicial+dy, c, CorTexto, CorPadrao)
+		}
 	}
 }
