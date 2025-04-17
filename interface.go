@@ -106,7 +106,7 @@ func interfaceDesenharBarraDeStatus(jogo *Jogo) {
 	}
 
 	// Instruções fixas
-	msg := "Use WASD para mover e E para interagir. ESC para sair."
+	msg := "."
 	for i, c := range msg {
 		termbox.SetCell(i, len(jogo.Mapa)+3, c, CorTexto, CorPadrao)
 	}

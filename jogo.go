@@ -4,6 +4,7 @@ package main
 import (
 	"bufio"
 	"math/rand"
+	"jogo/util"
 	"sync"
 	"os"
 	"time"
@@ -11,11 +12,10 @@ import (
 
 // Elemento representa qualquer objeto do mapa (parede, personagem, vegetação, etc)
 type Elemento struct {
-	simbolo  rune
-	cor      Cor
-	corFundo Cor
-	tangivel bool // Indica se o elemento bloqueia passagem
-
+	simbolo  rune   // símbolo que vai aparecer no mapa
+	cor      Cor    // cor do símbolo
+	corFundo Cor    // cor do fundo
+	tangivel bool   // se for true, não dá pra passar por cima
 }
 
 // Jogo contém o estado atual do jogo
@@ -28,25 +28,31 @@ type Jogo struct {
 	FimDeJogo      bool         // indica se o jogador perdeu o jogo
 	Tesouros       int
 	Caixas         []*Caixa     // lista de caixas no mapa
-	MutexMapa      *sync.Mutex // mutex para proteger o acesso ao mapa
+	MutexMapa      *sync.Mutex  // mutex para proteger o acesso ao mapa
 }
 
 // Elementos visuais do jogo
 var (
-	Personagem         = Elemento{'☺', CorCinzaEscuro, CorPadrao, true}
-	Parede             = Elemento{'▤', CorParede, CorFundoParede, true}
-	Vegetacao          = Elemento{'♣', CorVerde, CorPadrao, false}
-	Vazio              = Elemento{' ', CorPadrao, CorPadrao, false}
-	CaixaElemento      = Elemento{'■', CorAmarela, CorPadrao, false} // novo: caixa misteriosa
+	Personagem           = Elemento{'☺', CorCinzaEscuro, CorPadrao, true}
+	Parede               = Elemento{'▤', CorParede, CorFundoParede, true}
+	Vegetacao            = Elemento{'♣', CorVerde, CorPadrao, false}
+	Vazio                = Elemento{' ', CorPadrao, CorPadrao, false}
+
+	CaixaElemento        = Elemento{'■', CorAmarela, CorPadrao, true} // caixa fechada
+
+	// para animar as caixas coloridinhas após abrir
+	CaixaTesouroAberta   = Elemento{'■', CorVerde, CorPadrao, false}
+	CaixaArmadilhaAberta = Elemento{'■', CorVermelho, CorPadrao, false}
+	CaixaVaziaAberta     = Elemento{'■', CorCinzaEscuro, CorPadrao, false}
 )
 
 // Cria e retorna uma nova instância do jogo
 func jogoNovo() Jogo {
 	// O ultimo elemento visitado é inicializado como vazio
 	// pois o jogo começa com o personagem em uma posição vazia
-	return Jogo {
+	return Jogo{
 		UltimoVisitado: Vazio,
-		MutexMapa: &sync.Mutex{},
+		MutexMapa:      &sync.Mutex{},
 	}
 }
 
@@ -84,31 +90,31 @@ func jogoCarregarMapa(nome string, jogo *Jogo) error {
 		return err
 	}
 
-	// utilizando o seed para gerar números aleatórios
+	// coloca o seed pra gerar números aleatórios diferentes toda vez que o jogo é iniciado
 	rand.Seed(time.Now().UnixNano())
-	numCaixas := 10
+	numCaixas := 10 // número de caixas pra espalhar no mapa
 	tipos := []TipoCaixa{VAZIA, TESOURO, ARMADILHA}
 
-	// agora, vamos colocar as caixas em posições vazias aleatórias
+	// agora espalha as caixas em lugares aleatórios que estão vazios
 	for colocadas := 0; colocadas < numCaixas; {
-		x := rand.Intn(len(jogo.Mapa[0])) // escolhe uma coluna aleatória
-		y := rand.Intn(len(jogo.Mapa))    //     "    "  linha aleatória
+		x := rand.Intn(len(jogo.Mapa[0])) // pega coluna aleatória
+		y := rand.Intn(len(jogo.Mapa))    // pega linha aleatória
 
 		if jogo.Mapa[y][x] == Vazio {
 			jogo.Mapa[y][x] = CaixaElemento
-			tipo := tipos[rand.Intn(len(tipos))] // escolhe um tipo aleatório
-			caixa := &Caixa {
-				X: x,
-				Y: y,
-				Tipo: tipo,
-				Mapa: &jogo.Mapa,
-				Mutex: jogo.MutexMapa,
-				Interacao: make(chan bool),
+			tipo := tipos[rand.Intn(len(tipos))] // escolhe um tipo de caixa (aleatoriamente)
+			caixa := &Caixa{
+				X:          x,
+				Y:          y,
+				Tipo:       tipo,
+				Mapa:       &jogo.Mapa,
+				Mutex:      jogo.MutexMapa,
+				Interacao:  make(chan bool),
 			}
-			
+
 			caixa.Iniciar(jogo) // inicia a caixa
-			jogo.Caixas = append(jogo.Caixas, caixa) // adiciona a caixa à lista de caixas
-			colocadas++ // incrementa o contador de caixas colocadas
+			jogo.Caixas = append(jogo.Caixas, caixa) // adiciona na lista de caixas
+			colocadas++ // marca que colocou uma
 		}
 	}
 	return nil
@@ -131,7 +137,7 @@ func jogoPodeMoverPara(jogo *Jogo, x, y int) bool {
 		return false
 	}
 
-	// Pode mover para a posição
+	// liberado pra andar
 	return true
 }
 
@@ -147,13 +153,40 @@ func jogoMoverElemento(jogo *Jogo, x, y, dx, dy int) {
 	jogo.Mapa[ny][nx] = elemento            // move o elemento
 }
 
+// versão especial pra impedir andar por cima das caixas
+func jogoMoverComCaixa(jogo *Jogo, x, y int) bool {
+	if y < 0 || y >= len(jogo.Mapa) {
+		return false
+	}
+	if x < 0 || x >= len(jogo.Mapa[y]) {
+		return false
+	}
+
+	// checa se tem alguma caixa bloqueando a passagem
+	for _, caixa := range jogo.Caixas {
+		if caixa.X == x && caixa.Y == y && !caixa.Removida {
+			jogo.StatusMsg = "Uma caixa bloqueia o caminho!"
+			return false
+		}
+	}
+
+	if jogo.Mapa[y][x].tangivel {
+		return false
+	}
+	return true
+}
+
+// permite o jogador interagir com caixas que estão até 1 célula de distância
 func interagir(jogo *Jogo) {
-	jogo.MutexMapa.Lock()
+	jogo.MutexMapa.Lock() // trava o mapa pra ninguém mexer enquanto interage
 	defer jogo.MutexMapa.Unlock()
 
 	for _, caixa := range jogo.Caixas {
-		if caixa.X == jogo.PosX && caixa.Y == jogo.PosY && !caixa.Removida {
-			caixa.Interacao <- true
+		// checa se a caixa está próxima e não foi removida
+		if !caixa.Removida && util.Abs(caixa.X-jogo.PosX) <= 1 && util.Abs(caixa.Y-jogo.PosY) <= 1 {
+			caixa.Interacao <- true // manda o sinal pra caixa abrir
+			jogo.StatusMsg = "Você interagiu com a caixa!"
+			caixa.Removida = true // marca que a caixa foi removida
 			break
 		}
 	}
