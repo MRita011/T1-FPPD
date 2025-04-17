@@ -4,6 +4,7 @@ package main
 import (
 	"sync"
 	"time"
+	"jogo/util"
 )
 
 // NPCGuian representa o estado do NPC guia
@@ -116,8 +117,8 @@ func npcMoverEmDirecaoAoJogador(jogo *Jogo, npc *NPCGuian) {
 	nx, ny := npc.PosX, npc.PosY
 
 	// Verifica diferença absoluta nas coordenadas
-	diffX := abs(jogo.PosX - npc.PosX)
-	diffY := abs(jogo.PosY - npc.PosY)
+	diffX := util.Abs(jogo.PosX - npc.PosX)
+	diffY := util.Abs(jogo.PosY - npc.PosY)
 
 	// Tenta mover primeiro na direção com maior diferença
 	if diffX > diffY {
@@ -138,14 +139,6 @@ func npcMoverEmDirecaoAoJogador(jogo *Jogo, npc *NPCGuian) {
 
 	// Atualiza a posição se houve movimento
 	npc.PosX, npc.PosY = nx, ny
-}
-
-// Função helper para calcular o valor absoluto
-func abs(x int) int {
-	if x < 0 {
-		return -x
-	}
-	return x
 }
 
 // Goroutine que executa o comportamento do NPC

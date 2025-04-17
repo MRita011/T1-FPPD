@@ -66,20 +66,21 @@ func (c *Caixa) mover() {
 
 // consequencias de cada tipo de caixa
 func (c *Caixa) efeito(jogo *Jogo) {
-    c.Mutex.Lock()
-    defer c.Mutex.Unlock()
+	c.Mutex.Lock()
+	defer c.Mutex.Unlock()
 
-    // comportamento de cada caixa
-    switch c.Tipo {
+	// comportamento de cada caixa
+	switch c.Tipo {
 		case VAZIA:
 			jogo.StatusMsg = "...CAIXA VAZIA!"
+			(*c.Mapa)[c.Y][c.X] = Elemento{'■', CorCinzaEscuro, CorPadrao, false}
 		
 		case TESOURO:
 			jogo.StatusMsg = "TESOURO ENCONTRADO!"
 			jogo.Tesouros++
+			(*c.Mapa)[c.Y][c.X] = Elemento{'■', CorVerde, CorPadrao, false}
 			exibirMensagemTesouros(jogo)
 			
-			// o jogador achou todos os tesouros?
 			if jogo.Tesouros == 4 {
 				jogo.StatusMsg = "Parabéns! Você encontrou todos os 4 tesouros!"
 				jogo.FimDeJogo = true
@@ -87,25 +88,37 @@ func (c *Caixa) efeito(jogo *Jogo) {
 		
 		case ARMADILHA:
 			jogo.StatusMsg = "GAME OVER!"
+			(*c.Mapa)[c.Y][c.X] = Elemento{'■', CorVermelho, CorPadrao, false}
 			jogo.FimDeJogo = true
-    }
+		}
 
-    // caixa desaparecendo
-    for i := 0; i < 10; i++ {  // a animação pode durar 10 ciclos
-        time.Sleep(100 * time.Millisecond) // espera 100ms entre cada iteração
+	// atualizando a tela para mostrar a cor da caixa
+	interfaceDesenharJogo(jogo)
+	interfaceAtualizarTela()
 
-        if i%2 == 0 {
-            (*c.Mapa)[c.Y][c.X] = Vazio
-        } else {
-            (*c.Mapa)[c.Y][c.X] = CaixaElemento
-        }
+	time.Sleep(500 * time.Millisecond)
 
-        // Atualiza a tela
-        interfaceDesenharJogo(jogo)
-        interfaceAtualizarTela()
-    }
+	// caixa desaparecendo
+	for i := 0; i < 10; i++ {
+		time.Sleep(100 * time.Millisecond)
 
-    // após a animação, removemos a caixa permanentemente
-    (*c.Mapa)[c.Y][c.X] = Vazio
-    c.Removida = true
+		if i%2 == 0 {
+			(*c.Mapa)[c.Y][c.X] = Vazio
+		} else {
+			switch c.Tipo {
+				case VAZIA: (*c.Mapa)[c.Y][c.X] = Elemento{'■', CorCinzaEscuro, CorPadrao, false}
+
+				case TESOURO: (*c.Mapa)[c.Y][c.X] = Elemento{'■', CorVerde, CorPadrao, false}
+
+				case ARMADILHA: (*c.Mapa)[c.Y][c.X] = Elemento{'■', CorVermelho, CorPadrao, false}
+			}
+		}
+		
+		interfaceDesenharJogo(jogo)
+		interfaceAtualizarTela()
+	}
+
+	// após a animação, removemos a caixa permanentemente
+	(*c.Mapa)[c.Y][c.X] = Vazio
+	c.Removida = true
 }
