@@ -24,9 +24,14 @@ type Jogo struct {
 	PosX, PosY     int          // posição atual do personagem
 	UltimoVisitado Elemento     // elemento que estava na posição do personagem antes de mover
 	StatusMsg      string       // mensagem para a barra de status
+    MsgExpira      time.Time     // quando a mensagem expira
+    MsgMutex       sync.Mutex    // protege o acesso às mensagens
 	Guian          *NPCGuian    // referência ao NPC guia
-	FimDeJogo      bool         // indica se o jogador perdeu o jogo
-	Tesouros       int
+	Monstro        *Monstro     // referência ao monstro
+    MonstroAtivo   bool        // indica se o monstro está ativo 
+	MonstroSpawn   time.Time    // quando o monstro vai aparecer
+	FimDeJogo      bool         // indica se o jogador finalizou o jogo
+	Tesouros       int          //quantidade de tesouros coletados
 	Caixas         []*Caixa     // lista de caixas no mapa
 	MutexMapa      *sync.Mutex  // mutex para proteger o acesso ao mapa
 }
@@ -34,6 +39,7 @@ type Jogo struct {
 // Elementos visuais do jogo
 var (
 	Personagem           = Elemento{'☺', CorCinzaEscuro, CorPadrao, true}
+	Monstro              = Elemento{'👹', CorVermelho, CorPadrao, true}
 	Parede               = Elemento{'▤', CorParede, CorFundoParede, true}
 	Vegetacao            = Elemento{'♣', CorVerde, CorPadrao, false}
 	Vazio                = Elemento{' ', CorPadrao, CorPadrao, false}
@@ -53,9 +59,24 @@ func jogoNovo() Jogo {
 	return Jogo{
 		UltimoVisitado: Vazio,
 		MutexMapa:      &sync.Mutex{},
+        MonstroSpawn:   time.Now().Add(30 * time.Second), // monstro aparece após 30 segundos
 	}
 }
 
+func atualizarJogo(jogo *Jogo) {
+    // Spawn do monstro
+    if !jogo.MonstroAtivo && time.Now().After(jogo.MonstroSpawn) {
+        jogo.Monstro = monstroNovo()
+        jogo.Monstro.Iniciar(jogo)
+        jogo.MonstroAtivo = true
+        jogo.SetMessage("Um monstro apareceu no mapa!\nCorra para pegar todos os tesouros antes que ele roube...", 5*time.Second)
+    }
+    
+    // Atualizar monstro se estiver ativo
+    if jogo.MonstroAtivo {
+        jogo.Monstro.Atualizar(jogo)
+    }
+}
 // Lê um arquivo texto linha por linha e constrói o mapa do jogo
 func jogoCarregarMapa(nome string, jogo *Jogo) error {
 	arq, err := os.Open(nome)
@@ -137,6 +158,11 @@ func jogoPodeMoverPara(jogo *Jogo, x, y int) bool {
 		return false
 	}
 
+	// Verifica se o elemento de destino é uma caixa (não pode passar por cima)
+	if jogo.MonstroAtivo && jogo.Monstro.X == x && jogo.Monstro.Y == y {
+        return false
+    }
+
 	// liberado pra andar
 	return true
 }
@@ -190,4 +216,22 @@ func interagir(jogo *Jogo) {
 			break
 		}
 	}
+}
+
+func (j *Jogo) SetMessage(msg string, duration time.Duration) {
+    j.MsgMutex.Lock()
+    defer j.MsgMutex.Unlock()
+    
+    j.StatusMsg = msg
+    j.MsgExpira = time.Now().Add(duration)
+}
+
+func (j *Jogo) GetMessage() string {
+    j.MsgMutex.Lock()
+    defer j.MsgMutex.Unlock()
+    
+    if time.Now().After(j.MsgExpira) {
+        return ""
+    }
+    return j.StatusMsg
 }

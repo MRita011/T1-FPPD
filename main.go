@@ -49,19 +49,30 @@ func main() {
 	iniciarRenderizador(&jogo, parar)
 
 	// Loop principal de entrada
-	for {
+	for !jogo.FimDeJogo {
+		// Atualiza o estado do jogo (monstro, npc, etc)
+		atualizarJogo(&jogo)
+
+		// Processa entrada do usuário
 		evento := interfaceLerEventoTeclado()
-		if continuar := personagemExecutarAcao(evento, &jogo); !continuar {
-			close(parar) // Fecha o canal para parar as goroutines quando o jogo terminar
+		if evento.Tipo == "sair" {
 			break
 		}
 
-		// vendo se o jogador caiu em uma armadilja
-		if jogo.FimDeJogo {
-			interfaceDesenharJogo(&jogo) // redesenhando para mostrar a msg
-			time.Sleep(7 * time.Second) // espera 10 segundos
-			close(parar)
+		if continuar := personagemExecutarAcao(evento, &jogo); !continuar {
 			break
 		}
+
+		// Pequena pausa para evitar uso excessivo da CPU
+		time.Sleep(50 * time.Millisecond)
+	}
+
+	// Fecha o canal para parar as goroutines
+	close(parar)
+
+	// Mostra mensagem final por mais tempo se o jogo terminou
+	if jogo.FimDeJogo {
+		interfaceDesenharJogo(&jogo)
+		time.Sleep(5 * time.Second)
 	}
 }

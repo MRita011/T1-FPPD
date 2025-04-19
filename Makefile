@@ -14,3 +14,6 @@ clean:
 
 distclean: clean
 	rm -f go.mod go.sum
+
+run: build
+    ./jogo

@@ -150,7 +150,10 @@ func npcExecutar(jogo *Jogo, npc *NPCGuian) {
 	for npc.Ativo {
 		// Move o NPC em direção ao jogador
 		npcMoverEmDirecaoAoJogador(jogo, npc)
-
+		if jogo.GetMessage() == "" {
+            jogo.SetMessage("Guian: "+getDica(jogo), 2*time.Second)
+        }
+        
 		// Pausa pelo intervalo definido
 		time.Sleep(intervalo)
 	}
@@ -163,4 +166,46 @@ func npcDesenhar(jogo *Jogo, npc *NPCGuian) {
 
 	// Sobrescreve temporariamente com o NPC
 	interfaceDesenharElemento(npc.PosX, npc.PosY, NPC)
+}
+
+// calculaDistancia retorna a distância de Manhattan entre duas posições
+func calculaDistancia(x1, y1, x2, y2 int) int {
+    return util.Abs(x1-x2) + util.Abs(y1-y2)
+}
+
+// encontraCaixaTesouroMaisProxima retorna a caixa tesouro mais próxima do jogador
+func encontraCaixaTesouroMaisProxima(jogo *Jogo) *Caixa {
+    var maisProxima *Caixa
+    menorDistancia := 9999 // valor inicial alto
+
+    for _, caixa := range jogo.Caixas {
+        if caixa.Tipo == TESOURO && !caixa.Removida {
+            dist := calculaDistancia(jogo.PosX, jogo.PosY, caixa.X, caixa.Y)
+            if dist < menorDistancia {
+                menorDistancia = dist
+                maisProxima = caixa
+            }
+        }
+    }
+    return maisProxima
+}
+
+// getDica retorna a dica baseada na distância do jogador para a caixa tesouro mais próxima
+func getDica(jogo *Jogo) string {
+    caixa := encontraCaixaTesouroMaisProxima(jogo)
+    if caixa == nil {
+        return "FRIO (nenhum tesouro encontrado)"
+    }
+
+    dist := calculaDistancia(jogo.PosX, jogo.PosY, caixa.X, caixa.Y)
+    switch {
+    case dist <= 1:
+        return "QUENTE! (TESOURO BEM PERTO!)"
+    case dist <= 3:
+        return "QUENTE"
+    case dist <= 6:
+        return "MORNO"
+    default:
+        return "FRIO"
+    }
 }
