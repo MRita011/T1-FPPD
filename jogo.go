@@ -39,7 +39,7 @@ type Jogo struct {
 // Elementos visuais do jogo
 var (
 	Personagem           = Elemento{'☺', CorCinzaEscuro, CorPadrao, true}
-	Monstro              = Elemento{'👹', CorVermelho, CorPadrao, true}
+	Monstro              = Elemento{'¥', CorVermelho, CorPadrao, true}
 	Parede               = Elemento{'▤', CorParede, CorFundoParede, true}
 	Vegetacao            = Elemento{'♣', CorVerde, CorPadrao, false}
 	Vazio                = Elemento{' ', CorPadrao, CorPadrao, false}
