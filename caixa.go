@@ -72,24 +72,26 @@ func (c *Caixa) efeito(jogo *Jogo) {
 	// comportamento de cada caixa
 	switch c.Tipo {
 		case VAZIA:
-			jogo.StatusMsg = "...CAIXA VAZIA!"
+			jogo.SetMessage("...CAIXA VAZIA!", 3*time.Second)
 			(*c.Mapa)[c.Y][c.X] = Elemento{'■', CorCinzaEscuro, CorPadrao, false}
 		
 		case TESOURO:
-			jogo.StatusMsg = "TESOURO ENCONTRADO!"
+			jogo.SetMessage("TESOURO ENCONTRADO!", 3*time.Second)
 			jogo.Tesouros++
 			(*c.Mapa)[c.Y][c.X] = Elemento{'■', CorVerde, CorPadrao, false}
 			exibirMensagemTesouros(jogo)
 			
 			if jogo.Tesouros == 4 {
-				jogo.StatusMsg = "Parabéns! Você encontrou todos os 4 tesouros!"
+				jogo.SetMessage("Parabéns! Você encontrou todos os 4 tesouros!", 6*time.Second)
 				jogo.FimDeJogo = true
+				return
 			}
 		
 		case ARMADILHA:
-			jogo.StatusMsg = "GAME OVER!"
+			jogo.SetMessage("GAME OVER!", 6*time.Second)
 			(*c.Mapa)[c.Y][c.X] = Elemento{'■', CorVermelho, CorPadrao, false}
 			jogo.FimDeJogo = true
+			return
 		}
 
 	// atualizando a tela para mostrar a cor da caixa
