@@ -79,7 +79,7 @@ func interfaceDesenharJogo(jogo *Jogo) {
 
     // Desenha o monstro se estiver ativo
     if jogo.MonstroAtivo {
-        interfaceDesenharElemento(jogo.Monstro.X, jogo.Monstro.Y, Monstro)
+        interfaceDesenharElemento(jogo.Monstro.X, jogo.Monstro.Y, MonstroElemento)
     }
 
 	// Desenha a barra de status
