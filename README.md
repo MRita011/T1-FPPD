@@ -60,7 +60,7 @@ O arquivo `mapa.txt` contém cenários com os elementos para testes. O NPC e os 
 
 ## 🧑‍💻 Equipe
 
-- Amanda Wilmsen: email
+- Amanda Wilmsen: amanda.wilmsen@edu.pucrs.br
 - Killian D.B: killian.d@edu.pucrs.br
 - Luís Trein: email   
 - Maria Rita: m.ritarodrigues09@gmail.com  
