@@ -69,12 +69,18 @@ func interfaceDesenharJogo(jogo *Jogo) {
 		}
 	}
 
-	if jogo.Guian != nil {
-		npcDesenhar(jogo, jogo.Guian)
-	}
+	// Desenha o NPC antes do personagem
+    if jogo.Guian != nil {
+        npcDesenhar(jogo, jogo.Guian)
+    }
 
-	// Desenha o personagem sobre o mapa
-	interfaceDesenharElemento(jogo.PosX, jogo.PosY, Personagem)
+    // Desenha o personagem
+    interfaceDesenharElemento(jogo.PosX, jogo.PosY, Personagem)
+
+    // Desenha o monstro se estiver ativo
+    if jogo.MonstroAtivo {
+        interfaceDesenharElemento(jogo.Monstro.X, jogo.Monstro.Y, Monstro)
+    }
 
 	// Desenha a barra de status
 	interfaceDesenharBarraDeStatus(jogo)
