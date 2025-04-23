@@ -112,10 +112,10 @@ func (m *Monstro) roubarTesouro(jogo *Jogo) {
 	if calculaDistancia(jogo.PosX, jogo.PosY, m.X, m.Y) <= 1 && jogo.Tesouros > 0 {
 		jogo.Tesouros--
 		m.TesourosRoubados++
-		jogo.SetMessage(fmt.Sprintf("O monstro roubou um tesouro! (%d restantes)", jogo.Tesouros), 3*time.Second)
+		jogo.SetMessage(fmt.Sprintf("O monstro roubou um tesouro! (%d restantes)", jogo.Tesouros), 1*time.Minute) 
 
 		if jogo.Tesouros <= 0 {
-			jogo.SetMessage("GAME OVER!\nO monstro roubou TODOS os tesouros!", 5*time.Second)
+			jogo.SetMessage("GAME OVER!\nO monstro roubou TODOS os tesouros!", 30*time.Second)
 			jogo.FimDeJogo = true
 			return
 		}
