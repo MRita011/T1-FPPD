@@ -77,20 +77,40 @@ A tecla `E` ativa a interação com elementos num raio próximo:
 
 Comunicação entre jogador e caixas ocorre via canal `chan bool`, garantindo **desacoplamento** e **segurança concorrente**.
 
+## 🛠️ Compilação
+
+### 🪟 Windows
+
+Compilar com:
+
+```cmd
+go build -o jogo.exe
+```
+
+### ▶️ Como Executar
+
+> Certifique-se de ter o arquivo `mapa.txt` com um mapa válido na raiz do projeto.
+> Depois é só rodar no terminal:
+
+- **Windows**:
+  ```cmd
+  /.jogo
+  ```
+
 ## 🧑‍💻 Grupo
 
-- Amanda Wilmsen: amanda.wilmsen@edu.pucrs.br
-- Killian D.B: killian.d@edu.pucrs.br
-- Luís Trein:  luis.trein@edu.pucrs.br   
+- Amanda Wilmsen: amanda.wilmsen@edu.pucrs.br  
+- Killian D.B: killian.d@edu.pucrs.br  
+- Luís Trein:  luis.trein@edu.pucrs.br  
 - Maria Rita: m.ritarodrigues09@gmail.com  
 
 ## 📄 Relatório
 
-O relatório anexo descreve:
+O relatório em anexo descreve:
 
-- Os elementos concorrentes planejados
-- Como interagem com o jogador
-- Comportamentos esperados
-- Abordagem de implementação usando goroutines, canais, mutexes e timeouts
+- Os elementos concorrentes planejados  
+- Como interagem com o jogador  
+- Comportamentos esperados  
+- Abordagem de implementação usando goroutines, canais, mutexes e timeouts  
 
-[Link do Relatório](https://docs.google.com/document/d/1BOLIXdguUHU_Q2kOid4UDEJaYej-GEtfyy_RirfOZLo/edit)
+📄 [Link do Relatório no DOCS](https://docs.google.com/document/d/1BOLIXdguUHU_Q2kOid4UDEJaYej-GEtfyy_RirfOZLo/edit)
