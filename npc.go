@@ -36,7 +36,7 @@ func (npc *NPCGuian) seguirPersonagem(jogo *Jogo) {
 
 // Elemento visual do NPC Guian
 var (
-	NPC = Elemento{'🧙', CorVerde, CorPadrao, true}
+	NPC = Elemento{'🧙', CorRoxa, CorPadrao, true}
 )
 
 // Inicia o NPC em uma posição válida próxima ao jogador
